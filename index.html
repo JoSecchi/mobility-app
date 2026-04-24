@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>AC MOBILITY</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+  </head>
+  <body>
+    <div id="pin-screen" class="mobile-container auth-view">
+      <div class="auth-card">
+        <span class="brand-accent">ATHLETE'S CORNER <b>MOBILITY</b></span>
+        <h1>ACCESO</h1>
+        <div class="input-group">
+          <input
+            type="password"
+            id="pin-input"
+            placeholder="••••"
+            maxlength="4"
+            inputmode="numeric"
+          />
+          <p id="pin-error" class="error-msg"></p>
+        </div>
+        <button id="btn-login" class="btn-primary">ENTRAR</button>
+      </div>
+    </div>
+
+    <div id="selection-screen" class="mobile-container hidden">
+      <header class="mobile-header">
+        <span class="brand-small">MY<b>MOBILITY</b></span>
+        <h2>LIBRERÍA</h2>
+      </header>
+      <div id="rutinas-container" class="scroll-grid"></div>
+    </div>
+
+    <div id="app-screen" class="mobile-container player-view hidden">
+      <header class="player-header">
+        <button id="btn-back-to-menu" class="btn-nav">✕ SALIR</button>
+        <div class="progress-bar">
+          <div id="progress-fill" class="fill"></div>
+        </div>
+      </header>
+
+      <main class="player-main">
+        <div class="video-aspect-ratio">
+          <div id="player"></div>
+          <div class="overlay-gradient"></div>
+        </div>
+
+        <div class="info-block">
+          <h2 id="nombre-ejercicio">CARGANDO...</h2>
+          <p id="instrucciones">Prepárate para comenzar.</p>
+        </div>
+
+        <div class="timer-block">
+          <span id="countdown">00:00</span>
+        </div>
+      </main>
+
+      <footer class="player-footer">
+        <div class="main-controls">
+          <button id="btn-prev" class="btn-round">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+              <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+            </svg>
+          </button>
+          <button id="btn-play-pause" class="btn-action">COMENZAR</button>
+          <button id="btn-next" class="btn-round">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+              <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+            </svg>
+          </button>
+        </div>
+        <button id="btn-reset" class="btn-secondary">
+          REINICIAR EJERCICIO
+        </button>
+      </footer>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        getDocs,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+      // IMPORTANTE: REEMPLAZA CON TUS CREDENCIALES
+      const firebaseConfig = {
+        apiKey: "AIzaSyAGp_yfqp22Z2trpTnfaIphJxsQvQ-g5ok",
+        authDomain: "ac-mobility-app.firebaseapp.com",
+        projectId: "ac-mobility-app",
+        storageBucket: "ac-mobility-app.firebasestorage.app",
+        messagingSenderId: "173278747243",
+        appId: "1:173278747243:web:0bb933e2b6645601772f2e",
+        measurementId: "G-BCJ541PT2E",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      window.db = db;
+      window.collection = collection;
+      window.getDocs = getDocs;
+    </script>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
