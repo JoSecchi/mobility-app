@@ -7,31 +7,42 @@ let player;
 
 const PIN_ACCESO = "1234";
 
-// Generador de Sonido Profesional (Bip electrónico)
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// Sistema de Audio mejorado para compatibilidad móvil
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
 function playBeep(isFinal = false) {
+    if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(isFinal ? 880 : 440, audioCtx.currentTime); // Más agudo al final
+    osc.frequency.setValueAtTime(isFinal ? 880 : 440, audioCtx.currentTime);
     
     gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
     
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.1);
+    osc.stop(audioCtx.currentTime + 0.15);
 }
 
 // 1. LOGIN
 document.getElementById('btn-login').addEventListener('click', () => {
     const input = document.getElementById('pin-input').value;
     if (input === PIN_ACCESO) {
+        initAudio(); // Activa el audio al primer toque
         document.getElementById('pin-screen').classList.add('hidden');
         document.getElementById('selection-screen').classList.remove('hidden');
-        if (audioCtx.state === 'suspended') audioCtx.resume();
         cargarLibreria();
     } else {
         document.getElementById('pin-error').innerText = "PIN INCORRECTO";
@@ -56,7 +67,7 @@ async function cargarLibreria() {
     } catch (e) { console.error(e); }
 }
 
-// 3. PLAYER & AUTO-PLAY
+// 3. PLAYER CON LOOP FORZADO
 function iniciarRutina(ejercicios) {
     rutina = ejercicios;
     indiceActual = 0;
@@ -68,13 +79,26 @@ function iniciarRutina(ejercicios) {
             videoId: rutina[indiceActual].ytId,
             playerVars: { 
                 'autoplay': 1, 'controls': 0, 'modestbranding': 1, 
-                'loop': 1, 'rel': 0, 'showinfo': 0, 'iv_load_policy': 3,
-                'mute': 1, 'playlist': rutina[indiceActual].ytId 
+                'rel': 0, 'showinfo': 0, 'iv_load_policy': 3, 'mute': 1
             },
-            events: { 'onReady': () => cargarEjercicio(0) }
+            events: { 
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange 
+            }
         });
     } else {
         cargarEjercicio(0);
+    }
+}
+
+function onPlayerReady(event) {
+    cargarEjercicio(0);
+}
+
+// ESTO SOLUCIONA EL LOOP: Cuando termina el video, vuelve al inicio
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+        player.playVideo();
     }
 }
 
@@ -86,11 +110,9 @@ function cargarEjercicio(indice) {
     if (player && player.loadVideoById) {
         player.loadVideoById({
             videoId: ej.ytId,
-            startSeconds: 0,
             suggestedQuality: 'small'
         });
-        player.setLoop(true);
-        player.mute(); // Asegura autoplay infinito
+        player.mute();
         player.playVideo();
     }
     
@@ -100,8 +122,9 @@ function cargarEjercicio(indice) {
     actualizarProgreso();
 }
 
-// 4. TIMER LOGIC
+// 4. TIMER
 function toggleTimer() {
+    initAudio(); // Re-asegura el contexto de audio
     const btn = document.getElementById('btn-play-pause');
     if (estaCorriendo) {
         clearInterval(timerInterval);
@@ -110,7 +133,6 @@ function toggleTimer() {
         timerInterval = setInterval(() => {
             tiempoRestante--;
             
-            // Lógica de color y sonido
             const timerEl = document.getElementById('countdown');
             if (tiempoRestante <= 10) timerEl.classList.add('timer-warning');
             if (tiempoRestante <= 5 && tiempoRestante > 0) playBeep(false);
@@ -131,10 +153,8 @@ function siguienteEjercicio() {
     if (indiceActual < rutina.length - 1) {
         indiceActual++;
         resetAppstate();
-        // Opcional: auto-comenzar el siguiente ejercicio tras el beep final
         setTimeout(toggleTimer, 1000); 
     } else {
-        alert("¡Entrenamiento terminado!");
         salirAlMenu();
     }
 }
