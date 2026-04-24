@@ -5,26 +5,43 @@ let timerInterval = null;
 let estaCorriendo = false;
 let player;
 
-const PIN_ACCESO = "1234"; // Define tu PIN aquí
+const PIN_ACCESO = "1234";
 
-// 1. LÓGICA DE LOGIN
+// Generador de Sonido Profesional (Bip electrónico)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playBeep(isFinal = false) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(isFinal ? 880 : 440, audioCtx.currentTime); // Más agudo al final
+    
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+}
+
+// 1. LOGIN
 document.getElementById('btn-login').addEventListener('click', () => {
     const input = document.getElementById('pin-input').value;
     if (input === PIN_ACCESO) {
         document.getElementById('pin-screen').classList.add('hidden');
         document.getElementById('selection-screen').classList.remove('hidden');
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         cargarLibreria();
     } else {
         document.getElementById('pin-error').innerText = "PIN INCORRECTO";
-        document.getElementById('pin-input').value = "";
     }
 });
 
-// 2. CARGAR RUTINAS DESDE FIREBASE
+// 2. FIREBASE
 async function cargarLibreria() {
     const container = document.getElementById('rutinas-container');
-    container.innerHTML = "<p style='text-align:center; color:#777'>Conectando al box...</p>";
-
+    container.innerHTML = "<p style='text-align:center; color:#777'>Cargando...</p>";
     try {
         const querySnapshot = await window.getDocs(window.collection(window.db, "libreria"));
         container.innerHTML = "";
@@ -32,20 +49,14 @@ async function cargarLibreria() {
             const data = doc.data();
             const card = document.createElement('div');
             card.className = 'rutina-card';
-            card.innerHTML = `
-                <h3>${data.titulo}</h3>
-                <p>${data.ejercicios.length} EJERCICIOS • MOVILIDAD</p>
-            `;
+            card.innerHTML = `<h3>${data.titulo}</h3><p>${data.ejercicios.length} EJERCICIOS</p>`;
             card.onclick = () => iniciarRutina(data.ejercicios);
             container.appendChild(card);
         });
-    } catch (e) {
-        container.innerHTML = "<p style='color:red; text-align:center'>Error de conexión.</p>";
-        console.error(e);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// 3. INICIALIZACIÓN Y AUTO-PLAY
+// 3. PLAYER & AUTO-PLAY
 function iniciarRutina(ejercicios) {
     rutina = ejercicios;
     indiceActual = 0;
@@ -56,13 +67,9 @@ function iniciarRutina(ejercicios) {
         player = new YT.Player('player', {
             videoId: rutina[indiceActual].ytId,
             playerVars: { 
-                'autoplay': 1, 
-                'controls': 0, 
-                'modestbranding': 1, 
-                'loop': 1, 
-                'playlist': rutina[indiceActual].ytId,
-                'rel': 0,
-                'mute': 1 // Mute necesario para autoplay en móviles
+                'autoplay': 1, 'controls': 0, 'modestbranding': 1, 
+                'loop': 1, 'rel': 0, 'showinfo': 0, 'iv_load_policy': 3,
+                'mute': 1, 'playlist': rutina[indiceActual].ytId 
             },
             events: { 'onReady': () => cargarEjercicio(0) }
         });
@@ -83,14 +90,17 @@ function cargarEjercicio(indice) {
             suggestedQuality: 'small'
         });
         player.setLoop(true);
+        player.mute(); // Asegura autoplay infinito
+        player.playVideo();
     }
     
     tiempoRestante = ej.tiempo;
+    document.getElementById('countdown').classList.remove('timer-warning');
     actualizarDisplay();
     actualizarProgreso();
 }
 
-// 4. TIMER Y NAVEGACIÓN
+// 4. TIMER LOGIC
 function toggleTimer() {
     const btn = document.getElementById('btn-play-pause');
     if (estaCorriendo) {
@@ -99,6 +109,13 @@ function toggleTimer() {
     } else {
         timerInterval = setInterval(() => {
             tiempoRestante--;
+            
+            // Lógica de color y sonido
+            const timerEl = document.getElementById('countdown');
+            if (tiempoRestante <= 10) timerEl.classList.add('timer-warning');
+            if (tiempoRestante <= 5 && tiempoRestante > 0) playBeep(false);
+            if (tiempoRestante === 0) playBeep(true);
+
             actualizarDisplay();
             if (tiempoRestante <= 0) {
                 clearInterval(timerInterval);
@@ -114,8 +131,10 @@ function siguienteEjercicio() {
     if (indiceActual < rutina.length - 1) {
         indiceActual++;
         resetAppstate();
+        // Opcional: auto-comenzar el siguiente ejercicio tras el beep final
+        setTimeout(toggleTimer, 1000); 
     } else {
-        alert("¡Sesión completada!");
+        alert("¡Entrenamiento terminado!");
         salirAlMenu();
     }
 }

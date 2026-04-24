@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>AC MOBILITY</title>
+    <title>MYMOBILITY Pro</title>
     <link rel="stylesheet" href="style.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap"
@@ -17,12 +17,11 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="mobile-web-app-capable" content="yes" />
   </head>
   <body>
     <div id="pin-screen" class="mobile-container auth-view">
       <div class="auth-card">
-        <span class="brand-accent">ATHLETE'S CORNER <b>MOBILITY</b></span>
+        <span class="brand-accent">MY<b>MOBILITY</b></span>
         <h1>ACCESO</h1>
         <div class="input-group">
           <input
@@ -57,12 +56,13 @@
       <main class="player-main">
         <div class="video-aspect-ratio">
           <div id="player"></div>
+          <div class="video-blocker"></div>
           <div class="overlay-gradient"></div>
         </div>
 
         <div class="info-block">
           <h2 id="nombre-ejercicio">CARGANDO...</h2>
-          <p id="instrucciones">Prepárate para comenzar.</p>
+          <p id="instrucciones">Prepárate...</p>
         </div>
 
         <div class="timer-block">
@@ -98,25 +98,28 @@
         getDocs,
       } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-      // IMPORTANTE: REEMPLAZA CON TUS CREDENCIALES
       const firebaseConfig = {
         apiKey: "AIzaSyAGp_yfqp22Z2trpTnfaIphJxsQvQ-g5ok",
+
         authDomain: "ac-mobility-app.firebaseapp.com",
+
         projectId: "ac-mobility-app",
+
         storageBucket: "ac-mobility-app.firebasestorage.app",
+
         messagingSenderId: "173278747243",
+
         appId: "1:173278747243:web:0bb933e2b6645601772f2e",
+
         measurementId: "G-BCJ541PT2E",
       };
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
-
       window.db = db;
       window.collection = collection;
       window.getDocs = getDocs;
     </script>
-
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="app.js"></script>
   </body>
